@@ -1,4 +1,4 @@
 #!/bin/bash
 VERSION="1.0.1"
-docker build -t gowin-yosys-dev:${VERSION} .
-docker tag gowin-yosys-dev:${VERSION} gowin-yosys-dev:latest
+docker build -t gowin-ys-dev:${VERSION} .
+docker tag gowin-ys-dev:${VERSION} gowin-ys-dev:latest
