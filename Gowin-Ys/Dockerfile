@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     gawk tcl-dev libffi-dev git graphviz xdot pkg-config \
     python3 python3-dev python3-pip pybind11-dev \
     libboost-all-dev cmake libeigen3-dev libftdi-dev \
-    wget curl xz-utils unzip minicom file xxd less \
+    curl xz-utils unzip minicom file xxd less \
     && rm -rf /var/lib/apt/lists/*
 
 # Chipdb/packer (Apycula)
@@ -20,6 +20,11 @@ RUN python3 -m pip install --no-cache-dir apycula
 RUN git clone --recursive https://github.com/YosysHQ/yosys.git /opt/yosys && \
     make -C /opt/yosys -j"$(nproc)" && make -C /opt/yosys install
 
+# Install QT5 dependencies, nextpnr GUI needs.
+# Locale for Qt tools
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
 # nextpnr (Gowin via himbaechel; no GUI)
 RUN git clone --recursive https://github.com/YosysHQ/nextpnr.git /opt/nextpnr && \
     mkdir -p /opt/nextpnr/build && cd /opt/nextpnr/build && \
@@ -27,7 +32,7 @@ RUN git clone --recursive https://github.com/YosysHQ/nextpnr.git /opt/nextpnr &&
     make -j"$(nproc)" && make install
 
 # Simulation tools
-RUN apt-get update && apt-get install -y iverilog gtkwave verilator \
+RUN apt-get update && apt-get install -y iverilog gtkwave \
     && rm -rf /var/lib/apt/lists/*
 
 # openFPGALoader (programmer) — available in Ubuntu 24.04

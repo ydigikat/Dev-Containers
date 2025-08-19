@@ -48,13 +48,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
                     xxd \
                     less \                    
     && rm -rf /var/lib/apt/lists/*
-
-# Install Verible
-RUN curl -L -o verible.tar.gz https://github.com/chipsalliance/verible/releases/download/v0.0-4011-g03c61290/verible-v0.0-4011-g03c61290-linux-static-arm64.tar.gz && \
-    tar -xzf verible.tar.gz && \
-    mv verible-* /opt/verible && \
-    ln -s /opt/verible/bin/* /usr/local/bin/  && \
-    rm verible.tar.gz
     
 # Install svls (SystemVerilog Language Server)
 RUN curl -L -o svls.zip https://github.com/dalance/svls/releases/download/v0.2.12/svls-v0.2.12-x86_64-lnx.zip && \

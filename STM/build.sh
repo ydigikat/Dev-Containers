@@ -1,4 +1,4 @@
 #!/bin/bash
-VERSION="1.18.0"
-docker build -t stm32-dev-base:${VERSION} .
-docker tag stm32-dev-base:${VERSION} stm32-dev-base:latest
+VERSION="1.0.0"
+docker build -t stm32-dev:${VERSION} .
+docker tag stm32-dev:${VERSION} stm32-dev:latest
