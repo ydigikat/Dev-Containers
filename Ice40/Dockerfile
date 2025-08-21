@@ -40,12 +40,12 @@ RUN curl -L -o svls.zip https://github.com/dalance/svls/releases/download/v0.2.1
     chmod +x /usr/local/bin/svls && \
     rm -rf svls.zip
 
-# ensure sane /tmp and give vscode sudo once
+# ensure sane /tmp and give vscode sudo 
 RUN chmod 1777 /tmp \
  && apt-get update && apt-get install -y sudo \
  && echo "vscode ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vscode \
  && chmod 0440 /etc/sudoers.d/vscode \
- && chown -R vscode:vscode /home/vscode
+ && chown -R vscode:vscode /home/vscode 
 
 # Add vscode to dialout group
 RUN groupadd -f dialout && usermod -a -G dialout vscode
