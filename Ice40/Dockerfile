@@ -1,8 +1,8 @@
-#
-# Yosys development environment for ICE40
-#
-
+# Yosys development for ICE40
 FROM ubuntu:24.04
+
+# Create vscode user
+RUN useradd -m -s /bin/bash vscode
 
 # Build tools
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -10,15 +10,18 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     gawk tcl-dev libffi-dev git mercurial graphviz \
     xdot pkg-config python3 python3-dev python3-pip \
     libftdi-dev qtbase5-dev python3-dev libboost-all-dev \
-    cmake libeigen3-dev
+    cmake libeigen3-dev curl xz-utils unzip minicom sudo \
+    file xxd less && rm -rf /var/lib/apt/lists/*
 
-# ICE40 toolchain from source
+# Icestorm ChipDb
 RUN git clone --recursive https://github.com/YosysHQ/icestorm.git && \
     cd icestorm && make -j$(nproc) && make install
 
+# Yosys synthesis    
 RUN git clone --recursive https://github.com/YosysHQ/yosys.git && \
     cd yosys && make -j$(nproc) && make install
 
+# Nexpnr place and route
 RUN git clone --recursive https://github.com/YosysHQ/nextpnr.git && \
     cd nextpnr && \
     mkdir -p build && \
@@ -27,34 +30,28 @@ RUN git clone --recursive https://github.com/YosysHQ/nextpnr.git && \
     make -j$(nproc) && \
     make install
 
-# Simulation tools
-RUN apt-get install -y iverilog gtkwave
-
-# udev rules for IceStick FTDI programmer
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-    udev libusb-1.0-0 usbutils \
-    && rm -rf /var/lib/apt/lists/* \
-    && echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6010", MODE="0666"' > /etc/udev/rules.d/53-lattice-ftdi.rules \
-    && echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6014", MODE="0666"' >> /etc/udev/rules.d/53-lattice-ftdi.rules
-
-# Useful utilities
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-                    wget \
-                    curl \
-                    xz-utils \
-                    unzip \                                        
-                    minicom \
-                    file \
-                    xxd \
-                    less \                    
-    && rm -rf /var/lib/apt/lists/*
+# Simulation 
+RUN apt-get update && apt-get install -y iverilog gtkwave
     
-# Install svls (SystemVerilog Language Server)
+# SVLS 
 RUN curl -L -o svls.zip https://github.com/dalance/svls/releases/download/v0.2.12/svls-v0.2.12-x86_64-lnx.zip && \
     unzip svls.zip && \
     mv svls /usr/local/bin/ && \
     chmod +x /usr/local/bin/svls && \
     rm -rf svls.zip
-    
 
+# ensure sane /tmp and give vscode sudo once
+RUN chmod 1777 /tmp \
+ && apt-get update && apt-get install -y sudo \
+ && echo "vscode ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vscode \
+ && chmod 0440 /etc/sudoers.d/vscode \
+ && chown -R vscode:vscode /home/vscode
+
+# Add vscode to dialout group
+RUN groupadd -f dialout && usermod -a -G dialout vscode
+
+ # Switch from root user
+USER vscode
+
+    
 WORKDIR /workspace
