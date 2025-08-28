@@ -8,9 +8,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-# Create vscode user
-RUN useradd -m -s /bin/bash vscode
-
 # Required packages
 RUN apt-get update && apt-get install -y build-essential git cmake \
     libxcb-xinerama0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
@@ -21,7 +18,7 @@ RUN apt-get update && apt-get install -y build-essential git cmake \
     libhidapi-dev libudev-dev zlib1g-dev gzip && \
     rm -rf /var/lib/apt/lists/*
 
-# Build and install openFPGALoader
+# Build and install openFPGALoader (not a package in 22.04)
 RUN git clone https://github.com/trabucayre/openFPGALoader.git && \
     cd openFPGALoader && \
     mkdir build && \
@@ -38,7 +35,7 @@ RUN curl -L -o /tmp/svls.zip https://github.com/dalance/svls/releases/download/v
     && install -m 0755 /tmp/svls /usr/local/bin/svls \
     && rm -rf /tmp/svls /tmp/svls.zip
 
-# Install the gowin tooling - this needs to be local as it is behind a login wall
+# Install the gowin tooling - this needs to be from a local copy as it is behind a login wall
 COPY ${GOWIN_EDA} /tmp/ 
 RUN mkdir /opt/gowin/ && \    
     tar xvf /tmp/${GOWIN_EDA} -C /opt/gowin/ && \
@@ -50,25 +47,25 @@ RUN mv /opt/gowin/IDE/bin/qt.conf /opt/gowin/IDE/bin/qt.orig
 RUN echo "[Paths]\n\rPlugins=/usr/lib/x86_64-linux-gnu/qt5/plugins/" > /opt/gowin/IDE/bin/qt.conf    
 
 # Download and install ModelSim (big and slow install)
-RUN curl -L -o /tmp/ModelSimSetup-20.1.1.720-linux.run \
-    https://download.altera.com/akdlm/software/acdsinst/20.1std.1/720/ib_installers/ModelSimSetup-20.1.1.720-linux.run && \
-    chmod +x /tmp/ModelSimSetup-20.1.1.720-linux.run && \
-    yes | /tmp/ModelSimSetup-20.1.1.720-linux.run --unattendedmodeui none --mode unattended --accept_eula 1 --modelsim_edition modelsim_ase --installdir /opt/modelsim && \
-    rm -rf /tmp/ModelSimSetup-20.1.1.720-linux.run
-ENV PATH="/opt/modelsim/bin:${PATH}"
+# RUN curl -L -o /tmp/ModelSimSetup-20.1.1.720-linux.run \
+#     https://download.altera.com/akdlm/software/acdsinst/20.1std.1/720/ib_installers/ModelSimSetup-20.1.1.720-linux.run && \
+#     chmod +x /tmp/ModelSimSetup-20.1.1.720-linux.run && \
+#     yes | /tmp/ModelSimSetup-20.1.1.720-linux.run --unattendedmodeui none --mode unattended --accept_eula 1 --modelsim_edition modelsim_ase --installdir /opt/modelsim && \
+#     rm -rf /tmp/ModelSimSetup-20.1.1.720-linux.run
+# ENV PATH="/opt/modelsim/bin:${PATH}"
 
-# ensure sane /tmp and give vscode sudo once
-RUN chmod 1777 /tmp \
- && apt-get update && apt-get install -y sudo \
- && echo "vscode ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/vscode \
- && chmod 0440 /etc/sudoers.d/vscode \
- && chown -R vscode:vscode /home/vscode
+# Make /opt tools usable by non-root (keep these)
+RUN find /opt/gowin -type d -exec chmod a+rx {} \; && \
+    find /opt/gowin -type f -exec chmod a+r {} \; && \
+    find /opt/gowin/IDE/bin -type f -exec chmod a+rx {} \; || true
 
-# Add vscode to dialout group
-RUN groupadd -f dialout && usermod -a -G dialout vscode
+RUN find /opt/modelsim -type d -exec chmod a+rx {} \; && \
+    find /opt/modelsim -type f -exec chmod a+r {} \; && \
+    find /opt/modelsim/bin -type f -exec chmod a+rx {} \; || true
 
- # Switch from root user
-USER vscode
+# Keep sudo available for postStart chown
+RUN apt-get update && apt-get install -y --no-install-recommends sudo && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Do NOT set USER here (devcontainer will)
 WORKDIR /workspace
